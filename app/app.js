@@ -16,7 +16,6 @@ client.on('error', (err) => console.error('Redis error:', err));
 
 const KEY = 'mostViewed:menuItems';
 
-// CREATE — add a menu item with an initial score
 app.post('/items', async (req, res) => {
   const { id, score } = req.body;
   if (!id) return res.status(400).json({ error: 'id is required' });
@@ -28,20 +27,17 @@ app.post('/items', async (req, res) => {
   res.json({ message: `Added ${id} with score ${score ?? 0}` });
 });
 
-// READ — get all items ranked by views
 app.get('/items', async (_req, res) => {
   const items = await client.zRangeWithScores(KEY, 0, -1, { REV: true });
   res.json(items.map(({ value, score }) => ({ id: value, views: score })));
 });
 
-// READ — get a single item's view count
 app.get('/items/:id', async (req, res) => {
   const score = await client.zScore(KEY, req.params.id);
   if (score === null) return res.status(404).json({ error: 'Item not found' });
   res.json({ id: req.params.id, views: score });
 });
 
-// UPDATE — increment the view count for an item
 app.patch('/items/:id', async (req, res) => {
   const { increment = 1 } = req.body;
   const exists = await client.zScore(KEY, req.params.id);
@@ -51,14 +47,12 @@ app.patch('/items/:id', async (req, res) => {
   res.json({ id: req.params.id, views: newScore });
 });
 
-// DELETE — remove a single item
 app.delete('/items/:id', async (req, res) => {
   const removed = await client.zRem(KEY, req.params.id);
   if (!removed) return res.status(404).json({ error: 'Item not found' });
   res.json({ message: `Deleted ${req.params.id}` });
 });
 
-// DELETE — reset the entire sorted set
 app.delete('/items', async (_req, res) => {
   await client.del(KEY);
   res.json({ message: 'All items cleared' });
