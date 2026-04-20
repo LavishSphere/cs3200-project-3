@@ -18,6 +18,6 @@ const items = [
     await client.zAdd(KEY, { score: item.views, value: item.id });
     console.log(`Added ${item.id} with ${item.views} views`);
   }
-  console.log('Seed complete');
+  console.log('Data added');
   await client.disconnect();
 })();
